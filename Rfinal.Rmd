@@ -1,0 +1,377 @@
+---
+title: "CheWei Meng Final"
+author: "CheWei Meng"
+date: "2022-08-05"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Background:Data
+
+**Exploratory data analysis of wine reviews given by different customer and tasters across different countries.**
+
+**Source:**
+Kaggle data,web crawling reviews
+
+[linked phrase] https://www.kaggle.com/code/sudhirnl7/wine-recommender/notebook
+
+**Analysis Questions/Potential Insights**
+
+-Country wise wine volume
+
+-Average rating of wine by country 
+
+-Price and Point Correlation:Is there a correlation between price and points?
+
+-What are the top-ten most popular grape varieties among the tasters ? 
+
+-What kind of flavor profile do consumers prefer?
+
+
+## Method:Data Cleaning
+Brief of Data
+```
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+str(dataset1)
+summary(dataset1)
+```
+```{r}
+ <-
+library(tidytext)
+library(ggplot2)
+dataset1 <- read.csv("winer.csv")
+```
+Examine Data Type
+```
+str(dataset1)
+```
+```{r}
+str(dataset1)
+
+```
+```
+summary(dataset1)
+```
+
+```{r}
+summary(dataset1)
+```
+
+Drop unnecessary columns
+```{r} 
+datatest <- subset(dataset1, select = -taster_name)
+datatest <- subset(datatest,select=-region_2)
+datatest <- subset(datatest,select=-X)
+datatest <- subset(datatest,select=-designation)
+```
+```
+datatest <- subset(dataset1, select = -taster_name)
+datatest <- subset(datatest,select=-region_2)
+datatest <- subset(datatest,select=-X)
+datatest <- subset(datatest,select=-designation)
+```
+
+Discover NA and missing data
+```{r} 
+sum(is.na(datatest))
+datatest <- na.omit(datatest)
+```
+```
+sum(is.na(datatest))
+datawine <- na.omit(datatest)
+```
+
+
+Dataset trimmed down 8996 NA value
+
+
+Convert blank rows to NA 
+```{r} 
+datatest$region_1[datatest$region_1==""| datatest$region_1==" " ]<-NA
+datatest$country[datatest$country==""| datatest$region_1==" " ]<-NA
+datatest$description[datatest$description==""| datatest$description==" " ]<-NA
+datatest$points[datatest$points==""| datatest$points==" " ]<-NA
+datatest$price[datatest$price==""| datatest$price==" " ]<-NA
+datatest$taster_twitter_handle [datatest$taster_twitter_handle ==""| datatest$taster_twitter_handle ==" " ]<-NA
+datatest$title [datatest$title ==""| datatest$title ==" " ]<-NA
+
+```
+```
+datatest$region_1[datatest$region_1==""| datatest$region_1==" " ]<-NA
+datatest$country[datatest$country==""| datatest$region_1==" " ]<-NA
+datatest$description[datatest$description==""| datatest$description==" " ]<-NA
+datatest$points[datatest$points==""| datatest$points==" " ]<-NA
+datatest$price[datatest$price==""| datatest$price==" " ]<-NA
+datatest$taster_twitter_handle [datatest$taster_twitter_handle ==""| datatest$taster_twitter_handle ==" " ]<-NA
+datatest$title [datatest$title ==""| datatest$title ==" " ]<-NA
+```
+Check total NA value 
+
+```{r} 
+colSums(is.na(datatest))
+sum(is.na(datatest))
+```
+```
+colSums(is.na(datatest))
+sum(is.na(datatest))
+```
+Create new cleaned dataframe
+```
+datatest_clean <- na.omit(datatest)
+```
+```{r} 
+datatest_clean <- na.omit(datatest)
+```
+
+Dataset trimmed down 46683
+
+Rename long variable name
+
+```
+datatest_clean <- plyr::rename(datatest_clean, c("region_1" = "subregion","taster_twitter_handle"="taster"))
+```
+
+```{r} 
+datatest_clean <- plyr::rename(datatest_clean, c("region_1" = "subregion","taster_twitter_handle"="taster"))
+```
+
+## Analysis
+**Price Point relation**
+Create price/points matrix
+There is a rather positive relationship between price and point,in the wine industry sometimes you can find hidden gems with cheaper price yet high ranking points.
+
+
+```
+price_points <- data.frame(datatest_clean$points,datatest_clean$price)
+cor(price_points )
+```
+```{r}
+price_points <- data.frame(datatest_clean$points,datatest_clean$price)
+cor(price_points )
+```
+
+**Visualization**
+
+Price Point Scatter Plot
+```
+price_points_plot <-ggplot(price_points,aes(x=datatest_clean$points,y=datatest_clean$price))+geom_point(na.rm = TRUE)+geom_smooth(method="glm")
+price_points_plot
+```
+```{r}
+price_points_plot <-ggplot(price_points,aes(x=datatest_clean$points,y=datatest_clean$price))+geom_point(na.rm = TRUE)+geom_smooth(method="glm")
+price_points_plot
+```
+```
+lm(datatest_clean$price~datatest_clean$points,data =price_points)
+```
+```{r}
+lm(datatest_clean$price~datatest_clean$points,data =price_points)
+```
+
+**WinePrice = 6.112  * WinePoints-504.938**
+
+
+**Example:**
+Wine could be consider as a bargain if the wine has rating of 95 or above yet cost less than 75$.
+
+
+**Volume of wine by country**
+
+Create new price range
+wines that are above 1000 and below 15 dollars
+```
+new_datatest_clean<-filter(datatest_clean,datatest_clean$price<=1000 & datatest_clean$price>=15)
+```
+```{r}
+new_datatest_clean<-filter(datatest_clean,datatest_clean$price<=1000 & datatest_clean$price>=15)
+```
+
+Convert country variable into factor variable
+```
+new_datatest_clean$country <- factor(new_datatest_clean$country,levels = c("US", "France", "Italy", "Spain","Argentina","Australia","Canada"))
+
+```
+
+```{r}
+new_datatest_clean$country <- factor(new_datatest_clean$country,levels = c("US", "France", "Italy", "Spain","Argentina","Australia","Canada"))
+```
+**Visualization:Bar Chart**
+```
+ggplot(new_datatest_clean,aes(x= country,y=price))+geom_bar(aes(fill=country),stat ="identity")
+```
+```{r}
+ggplot(new_datatest_clean,aes(x= country,y=price))+geom_bar(aes(fill=country),stat ="identity")
+```
+
+**Most popular grape variety**
+New dataframe with point,price and variety
+Sort the most appeared varieties on a decreasing order
+```
+popular_grapes<- datatest_clean[,c(3,4,9)]
+popular_grapes_n<- popular_grapes %>% count(variety, sort = TRUE)
+```
+```{r}
+popular_grapes<- datatest_clean[,c(3,4,9)]
+popular_grapes_n<- popular_grapes %>% count(variety, sort = TRUE)
+head(popular_grapes_n,10)
+```
+Drop non meaningful rows:Red Blend &Rose
+```
+popular_grapes_n<- popular_grapes_n[-c(3,7),]
+```
+```{r}
+popular_grapes_n<- popular_grapes_n[-c(3,7),]
+```
+
+**Top 10 popular grape variety:**
+Red Wine:Pinot Noir/Cabernet Sauvignon/Bordeaux-style Red Blend/Syrah/Malbec/Sangiovese/Nebbiolo
+White Wine:Chardonnay/Sauvignon Blanc/Riesling
+
+**Average Wine Points by country**
+Find mean points for each country
+```
+country_point <- datatest_clean[,c(1,3)]
+avg_country_price <- filter(filter(country_point,country %in% c("US")))
+us_points <- mean(avg_country_price$points)
+
+avg_country_price <- filter(filter(country_point,country %in% c("France")))
+france_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Italy")))
+Italy_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Spain")))
+Spain_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Australia")))
+Australia_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Argentina")))
+Argentina_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Canada")))
+Canada_points <- mean(mean(avg_country_price$points))
+```
+```{r}
+country_point <- datatest_clean[,c(1,3)]
+avg_country_price <- filter(filter(country_point,country %in% c("US")))
+us_points <- mean(avg_country_price$points)
+
+avg_country_price <- filter(filter(country_point,country %in% c("France")))
+france_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Italy")))
+Italy_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Spain")))
+Spain_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Australia")))
+Australia_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Argentina")))
+Argentina_points <- mean(mean(avg_country_price$points))
+
+avg_country_price <- filter(filter(country_point,country %in% c("Canada")))
+Canada_points <- mean(mean(avg_country_price$points))
+```
+
+Creat  Barchart
+```
+country <- c("US","France","Italy","Spain","Australia","Argentina","Canada")
+country_point_1 <- c(us_points,france_points,Italy_points,Spain_points,Australia_points,Argentina_points,Canada_points)
+
+country_point_f <- data.frame(country_point_1,country)
+
+country_point_f$country <- factor(country_point_f$country,levels = c("Canada", "US", "Italy", "Australia","France","Spain","Argentina"))
+
+ggplot(country_point_f,aes(x= country,y=country_point_1))+geom_bar(aes(fill=country),stat ="identity")
+```
+```{r}
+country <- c("US","France","Italy","Spain","Australia","Argentina","Canada")
+country_point_1 <- c(us_points,france_points,Italy_points,Spain_points,Australia_points,Argentina_points,Canada_points)
+
+country_point_f <- data.frame(country_point_1,country)
+
+country_point_f$country <- factor(country_point_f$country,levels = c("Canada", "US", "Italy", "Australia","France","Spain","Argentina"))
+
+ggplot(country_point_f,aes(x= country,y=country_point_1))+geom_bar(aes(fill=country),stat ="identity")
+```
+## Reviews Text Analysis
+
+Tokenization,Omit stop words(the/an/that) from tidytext package
+```
+wine_review <- 
+  datatest_clean %>% unnest_tokens(output=word,input=description) %>% 
+  anti_join(stop_words,by="word") %>% 
+  distinct() %>% 
+  count(word,sort=TRUE)
+```
+```{r}
+wine_review <- 
+  datatest_clean %>% unnest_tokens(output=word,input=description) %>% 
+  anti_join(stop_words,by="word") %>% 
+  distinct() %>% 
+  count(word,sort=TRUE)
+```
+Create different wine aroma discriptors for filter
+```
+fruity<-c("berry", "grape", "cherry", "strawberry", "boysenberry", "cassis", "blueberry", "blackberry","black cherry","citrus" ," apple", "pear", "pineapple")
+tertiary<-c("tobacco", "truffle", "earth", "spice box", "chocolate", "smoke", "crushed stone","cigar box")
+oak<-c("coffee", "vanilla","chocolate")
+```
+```{r}
+fruity<-c("berry", "grape", "cherry", "strawberry", "boysenberry", "cassis", "blueberry", "blackberry","black cherry","citrus" ," apple", "pear", "pineapple")
+tertiary<-c("tobacco", "truffle", "earth", "spice box", "chocolate", "smoke", "crushed stone","cigar box")
+oak<-c("coffee", "vanilla","chocolate")
+```
+
+Filter
+
+```
+aroma1<-ifelse(wine_review$word %in% fruity,"fruit",(ifelse(wine_review$word %in% oak,"oak",(ifelse(wine_review$word %in% tertiary,"tertiary","non")))))
+wine_review$aroma <- aroma1
+wine_review1<-filter(wine_review,aroma %in% c("fruit","oak","tertiary"))
+wine_review1$aroma <- factor(wine_review1$aroma,levels = c("fruit","oak","tertiary"))
+```
+```{r}
+aroma1<-ifelse(wine_review$word %in% fruity,"fruit",(ifelse(wine_review$word %in% oak,"oak",(ifelse(wine_review$word %in% tertiary,"tertiary","non")))))
+wine_review$aroma <- aroma1
+wine_review1<-filter(wine_review,aroma %in% c("fruit","oak","tertiary"))
+wine_review1$aroma <- factor(wine_review1$aroma,levels = c("fruit","oak","tertiary"))
+
+```
+
+
+
+
+Visualization
+```
+ggplot(wine_review1,aes(x= word,y=n))+geom_bar(aes(fill=aroma),stat ="identity")
+```
+```{r}
+ggplot(wine_review1,aes(x= word,y=n))+geom_bar(aes(fill=aroma),stat ="identity")
+```
+
+
+
+## Conclusion
+1.Top-ten popular grape varieties are:
+Red Wine:Pinot Noir/Cabernet Sauvignon/Bordeaux-style Red Blend/Syrah/Malbec/Sangiovese/Nebbiolo 
+White Wine:Chardonnay/Sauvignon Blanc/Riesling
+
+2.There is a positive relationship between price and points,you pay what you drink.But it is possible to find hidden gems.
+WinePrice = 6.112 * WinePoints-504.938
+Keep a tab on this formula and bring them with you at a wine store！
+
+3.Us has the most volume of wine in terms of 15~1000 price range.
+
+4.In the realm of the this data set the quality of wine have no significant difference.
+
+5.Consumers prefer more fruit characters in wines 
+
